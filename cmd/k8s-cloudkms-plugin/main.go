@@ -31,6 +31,8 @@ import (
 	v1 "github.com/GoogleCloudPlatform/k8s-cloudkms-plugin/plugin/v1"
 	v2 "github.com/GoogleCloudPlatform/k8s-cloudkms-plugin/plugin/v2"
 	"github.com/golang/glog"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudkms/v1"
 	"google.golang.org/api/option"
 )
@@ -43,7 +45,6 @@ var (
 	metricsPort = flag.Int("metrics-port", 8082, "Port on which to publish metrics")
 	metricsPath = flag.String("metrics-path", "metrics", "Path at which to publish metrics")
 
-	gceConf          = flag.String("gce-config", "", "Path to gce.conf, if running on GKE.")
 	keyURI           = flag.String("key-uri", "", "Uri of the key use for crypto operations (ex. projects/my-project/locations/my-location/keyRings/my-key-ring/cryptoKeys/my-key)")
 	pathToUnixSocket = flag.String("path-to-unix-socket", "/var/run/kmsplugin/socket.sock", "Full path to Unix socket that is used for communicating with KubeAPI Server, or Linux socket namespace object - must start with @")
 	kmsVersion       = flag.String("kms", "v2", "Kubernetes KMS API version. Possible values: v1, v2. Default value is v2.")
@@ -68,13 +69,21 @@ func main() {
 	)
 
 	if !*integrationTest {
-		// httpClient should be constructed with context.Background. Sending a context with
-		// timeout or deadline will cause subsequent calls via the client to fail once the timeout or
-		// deadline is triggered. Instead, the plugin supplies a context per individual calls.
-		httpClient, err = plugin.NewHTTPClient(ctx, *gceConf)
+		credentials, err := google.FindDefaultCredentials(ctx, cloudkms.CloudPlatformScope)
 		if err != nil {
-			glog.Exitf("failed to instantiate http httpClient: %v", err)
+			glog.Exitf("failed to get default credentials: %v", err)
 		}
+
+		t, err := credentials.TokenSource.Token()
+		if err != nil {
+			glog.Errorf("failed to get token: %v", err)
+			os.Exit(1)
+		} else if t.AccessToken == "" {
+			glog.Errorf("access token is empty")
+			os.Exit(1)
+		}
+
+		httpClient = oauth2.NewClient(ctx, credentials.TokenSource)
 	}
 
 	kms, err := cloudkms.NewService(ctx, option.WithHTTPClient(httpClient))
