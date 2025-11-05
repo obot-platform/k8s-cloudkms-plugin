@@ -18,7 +18,6 @@ require (
 	golang.org/x/oauth2 v0.27.0
 	google.golang.org/api v0.167.0
 	google.golang.org/grpc v1.62.0
-	gopkg.in/gcfg.v1 v1.2.3
 	k8s.io/api v0.29.2
 	k8s.io/apimachinery v0.29.2
 )
@@ -52,7 +51,6 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240228224816-df926f6c8641 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e // indirect
